@@ -216,3 +216,6 @@ while true; do
     esac
 
     echo ""
+    echo "Press [ENTER] to return to the SkelarHub Menu..."
+    read -r
+  done
