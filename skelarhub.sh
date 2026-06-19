@@ -38,16 +38,6 @@ DEB_NET="nmap net-tools mtr iperf3 dnsutils ufw"
 RPM_NET="nmap net-tools mtr iperf3 bind-utils ufw"
 ARCH_NET="nmap net-tools mtr iperf3 dnsutils ufw"
 
-# Unified Helper for the standalone individual package installs
-pkg_install() {
-    case "$OS" in
-        ubuntu|debian|pop|mint) apt-get update -qq && apt-get install -y $1 ;;
-        fedora) dnf install -y $1 ;;
-        centos|rhel|almalinux|rocky) yum install -y epel-release && yum install -y $1 ;;
-        arch) pacman -Sy --needed --noconfirm $1 ;;
-    esac
-}
-
 # AI Diagnostic Function
 ai_diagnostic() {
     echo ""
@@ -87,13 +77,11 @@ while true; do
     echo " 8) Hardware & Sensor Inspector (CPU, RAM, Storage Metrics)"
     echo " 9) Backup Configurations (Archive critical system user workspaces)"
     echo " 10) Run Ookla Speedtest Engine"
-    echo " 11) Install Speedtest.net Repository Configurations"
-    echo " 12) Install Dedicated Firewall Utilities (UFW / Firewalld)"
-    echo " 13) Install Legacy Network Toolsets (net-tools / ifconfig)"
-    echo " 14) Exit SkelarHub"
+    echo " 11) Install Signed Speedtest.net Repositories"
+    echo " 12) Exit SkelarHub"
     echo "========================================================================"
     
-    echo -n "Select an option [1-14]: "
+    echo -n "Select an option [1-12]: "
     read -r choice 
 
     case "$choice" in
@@ -143,14 +131,20 @@ while true; do
         6)
             echo ""
             echo "[*] Applying fundamental infrastructure security controls..."
-            if command -v ufw &> /dev/null; then
+            if command -v ufw &>/dev/null; then
                 ufw default deny incoming &>/dev/null
                 ufw default allow outgoing &>/dev/null
                 ufw allow 22/tcp comment 'SSH Port' &>/dev/null
                 ufw --force enable
                 echo "[✔] Firewall activated and standard inbound access clamped."
+            elif command -v firewalld &>/dev/null; then
+                systemctl enable --now firewalld &>/dev/null
+                firewall-cmd --set-default-zone=drop &>/dev/null
+                firewall-cmd --permanent --add-service=ssh &>/dev/null
+                firewall-cmd --reload &>/dev/null
+                echo "[✔] Firewalld activated and standard zones locked down."
             else
-                echo "[!] Firewall framework (UFW) missing. Install Option 12 or Option 4 first."
+                echo "[!] Firewall framework missing. Install Option 4 first."
             fi
             ;;
         7)
@@ -187,10 +181,13 @@ while true; do
             ;;
         11)
             echo ""
-            echo "[*] Installing official Speedtest.net repository mappings..."
+            echo "[*] Installing official Speedtest.net repository with GPG keys..."
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
-                apt-get install -y curl gnupg
-                curl -s https://packagecloud.io | bash
+                apt-get install -y curl gnupg dirmngr apt-transport-https lsb-release
+                # Download and securely register the official GPG key
+                curl -fsSL https://packagecloud.io | gpg --dearmor -o /etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg
+                # Add the repository referencing the secure keyring explicitly
+                echo "deb [signed-by=/etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg] https://packagecloud.io $(lsb_release -cs) main" > /etc/apt/sources.list.d/speedtest.list
                 apt-get update && apt-get install -y speedtest
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 curl -s https://packagecloud.io | bash
@@ -199,29 +196,15 @@ while true; do
                 pacman -Sy --needed --noconfirm speedtest-cli
                 [ ! -f /usr/bin/speedtest ] && ln -s "$(which speedtest-cli)" /usr/local/bin/speedtest 2>/dev/null
             fi
-            echo "[✔] Speedtest configurations finalized."
+            echo "[✔] Speedtest signature and repository configurations finalized."
             ;;
         12)
-            echo ""
-            echo "[*] Initializing dedicated firewall configurations..."
-            if [ "$OS" = "fedora" ] || [[ "$OS" =~ (centos|rhel|almalinux|rocky) ]]; then
-                pkg_install "firewalld"
-            else
-                pkg_install "ufw"
-            fi
-            ;;
-        13)
-            echo ""
-            echo "[*] Provisioning legacy net-tools collection..."
-            pkg_install "net-tools"
-            ;;
-        14)
             echo ""
             echo "Exiting SkelarHub. Keep building!"
             echo ""
             exit 0
             ;;
-        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 14." ;;
+        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 12." ;;
     esac
 
     echo ""
