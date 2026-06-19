@@ -1,14 +1,15 @@
 #!/bin/bash
 
-# --- SELF-HEALING CHMOD PATH PROTECTION ---
-# Silently fixes terminal flashing / permission loops before running anything else
-SCRIPT_PATH=$(readlink -f "$0")
-if [ ! -x "$SCRIPT_PATH" ]; then
-    chmod +x "$SCRIPT_PATH"
+# --- STRICT PRIVILEGE CHECK (NO FLASHING LOOPS) ---
+if [ "$EUID" -ne 0 ]; then
+    echo "======================================================================"
+    echo " [ERROR] SkelarHub requires absolute administrative privileges."
+    echo "======================================================================"
+    echo " Please run this script directly using sudo:"
+    echo " sudo $0"
+    echo "======================================================================"
+    exit 1
 fi
-
-# --- ROOT ELEVATION ---
-[ "$EUID" -ne 0 ] && echo "[ERROR] Run with root privileges." && exec sudo bash "$0" "$@" && exit 1
 
 # Detect Linux Distribution
 [ -f /etc/os-release ] && . /etc/os-release && OS=$ID || OS="unknown"
