@@ -101,13 +101,20 @@ while true; do
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
                 apt install curl gnupg2 -y
                 curl -s https://packagecloud.io | bash
+                
+                # FALLBACK PATCH: If running on a newer Ubuntu release (like Noble 24.04 or later) 
+                # that packagecloud hasn't explicitly mapped, rewrite the source line to reference 'jammy'
+                if [ -f /etc/apt/sources.list.d/ookla_speedtest-cli.list ]; then
+                    sed -i 's/noble/jammy/g' /etc/apt/sources.list.d/ookla_speedtest-cli.list
+                    sed -i 's/oracular/jammy/g' /etc/apt/sources.list.d/ookla_speedtest-cli.list
+                fi
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 curl -s https://packagecloud.io | bash
             fi
-            echo "[✔] Signed repository setup completed." ;;
+            echo "[✔] Signed repository setup completed with compatibility patches." ;;
         12) echo -e "\n[*] Fetching Speedtest engine client binaries..."
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
-                apt install speedtest -y
+                apt-get update && apt-get install speedtest -y
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 [ -f /usr/bin/dnf ] && dnf install -y speedtest || yum install -y speedtest
             elif [ "$OS" = "arch" ]; then
