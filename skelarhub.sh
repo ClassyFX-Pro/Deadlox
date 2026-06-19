@@ -99,9 +99,8 @@ while true; do
             speedtest --accept-license --accept-gdpr ;;
         11) echo -e "\n[*] Provisioning official Speedtest.net repository signature hooks..."
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
-                # Official configuration sequence
                 apt install curl gnupg2 -y
-                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash
+                curl -s https://packagecloud.io | bash
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 curl -s https://packagecloud.io | bash
             fi
