@@ -1,14 +1,22 @@
 #!/bin/bash
 
-# --- STRICT PRIVILEGE CHECK (NO FLASHING LOOPS) ---
-if [ "$EUID" -ne 0 ]; then
-    echo "======================================================================"
-    echo " [ERROR] SkelarHub requires absolute administrative privileges."
-    echo "======================================================================"
-    echo " Please run this script directly using sudo:"
-    echo " sudo $0"
-    echo "======================================================================"
-    exit 1
+# --- AUTOMATIC SELF-HEALING PERMISSIONS & ELEVATION ---
+# This block runs automatically at startup, applies chmod, elevates, and stops looping.
+if [ -z "$SKELAR_ELEVATED" ]; then
+    SCRIPT_PATH=$(readlink -f "$0")
+    
+    # Automatically apply execution permissions if missing
+    if [ ! -x "$SCRIPT_PATH" ]; then
+        chmod +x "$SCRIPT_PATH"
+    fi
+    
+    # Export flag and re-execute safely with root privileges
+    export SKELAR_ELEVATED=1
+    if [ "$EUID" -ne 0 ]; then
+        exec sudo -E bash "$SCRIPT_PATH" "$@"
+    else
+        exec bash "$SCRIPT_PATH" "$@"
+    fi
 fi
 
 # Detect Linux Distribution
