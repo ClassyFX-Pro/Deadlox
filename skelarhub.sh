@@ -1,17 +1,4 @@
-cat << 'EOF' > skelarhub.sh
 #!/bin/bash
-
-# --- SELF-PERMISSIVE WRAPPER ---
-if [ ! -x "$0" ]; then
-    chmod +x "$0" 2>/dev/null
-    exec "$0" "$@"
-fi
-
-# Ensure the script is run with sudo privileges
-if [ "$EUID" -ne 0 ]; then
-  echo -e "\033[0;31m\033[1m[ERROR]\033[0m Please run SkelarHub using sudo: sudo ./skelarhub.sh"
-  exit 1
-fi
 
 # Define Standard Colors for Menu Text
 RED='\033[0;31m'
@@ -22,6 +9,14 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
+# --- AUTOMATIC ROOT SELF-ELEVATION ---
+# If not run as root, this block automatically asks for sudo and re-runs natively
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}${BOLD}[ERROR]${RESET} SkelarHub requires root privileges. Elevating..."
+  exec sudo bash "$0" "$@"
+  exit 1
+fi
+
 # Detect Linux Distribution
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -30,7 +25,7 @@ else
     OS="unknown"
 fi
 
-# Pixel-by-Pixel RGB Engine for ASCII banner
+# Stable Pixel-by-Pixel RGB Engine for ASCII banner
 print_rgb_line() {
     local text="$1"
     local row_offset="$2"
@@ -93,6 +88,7 @@ ai_diagnostic() {
     fi
 }
 
+# Master Loop Execution
 while true; do
     draw_header
     echo -e "${GREEN}${BOLD} 1)${RESET} Update & Upgrade System Packages"
@@ -102,15 +98,15 @@ while true; do
     echo -e "${GREEN}${BOLD} 5)${RESET} Fast System Junk Cleaner (Clear Cache, Logs, and Orphaning Assets)"
     echo -e "${GREEN}${BOLD} 6)${RESET} Basic Security Hardening (Enable Firewall & Close Weak Entrypoints)"
     echo -e "${GREEN}${BOLD} 7)${RESET} Performance Tuner (Optimize SWAP usage & Increase File Limits)"
-    echo -e "${GREEN}${BOLD} 8)${RESET} Hardware Hardware & Sensor Inspector (CPU, RAM, Storage Metrics)"
+    echo -e "${GREEN}${BOLD} 8)${RESET} Hardware & Sensor Inspector (CPU, RAM, Storage Metrics)"
     echo -e "${GREEN}${BOLD} 9)${RESET} Backup Configurations (Archive critical system user workspaces)"
     echo -e "${RED}${BOLD} 10)${RESET} Exit SkelarHub"
     echo -e "${CYAN}${BOLD}========================================================================${RESET}"
     
     echo -n -e "${YELLOW}${BOLD}Select an option [1-10]: ${RESET}"
-    read -r choice < /dev/tty 
+    read -r choice 
 
-    case $choice in
+    case "$choice" in
         1)
             echo -e "\n${BLUE}${BOLD}[*] Running System Upgrade...${RESET}"
             case "$OS" in
@@ -190,6 +186,5 @@ while true; do
     esac
 
     echo -e "\n${CYAN}Press [ENTER] to return to the SkelarHub Menu...${RESET}"
-    read -r < /dev/tty
+    read -r 
 done
-EOF
