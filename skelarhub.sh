@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # --- AUTOMATIC ROOT SELF-ELEVATION ---
-# If not run as root, this block automatically elevates the execution context safely
-if [ "$EUID" -ne 0 ]; then
+if [ "$EUID" -ne 0 ] ; then
   echo "[ERROR] SkelarHub requires root privileges. Elevating..."
   exec sudo bash "$0" "$@"
   exit 1
 fi
 
 # Detect Linux Distribution
-if [ -f /etc/os-release ]; then
+if [ -f /etc/os-release ] ; then
     . /etc/os-release
     OS=$ID
 else
@@ -30,9 +29,9 @@ draw_header() {
 }
 
 # Package Configurations
-DEB_DEV="build-essential git curl wget vim nano tmux htop python3 python3-pip nodejs npm docker.io docker-compose"
-RPM_DEV="curl wget git @development-tools vim-enhanced nano htop tmux python3 python3-pip nodejs docker docker-compose"
-ARCH_DEV="base-devel git curl wget vim nano tmux htop python3 python3-pip nodejs npm docker docker-compose"
+DEB_DEV="build-essential git curl wget vim nano htop tmux unzip zip tar python3 python3-pip nodejs npm docker.io docker-compose"
+RPM_DEV="curl wget git @development-tools vim-enhanced nano htop tmux unzip zip tar python3 python3-pip nodejs docker docker-compose"
+ARCH_DEV="base-devel git curl wget vim nano tmux htop unzip zip tar python3 python3-pip nodejs npm docker docker-compose"
 
 DEB_NET="nmap net-tools mtr iperf3 dnsutils ufw"
 RPM_NET="nmap net-tools mtr iperf3 bind-utils ufw"
@@ -78,10 +77,11 @@ while true; do
     echo " 9) Backup Configurations (Archive critical system user workspaces)"
     echo " 10) Run Ookla Speedtest Engine"
     echo " 11) Install Signed Speedtest.net Repositories"
-    echo " 12) Exit SkelarHub"
+    echo " 12) Download & Install Speedtest Binary Engine"
+    echo " 13) Exit SkelarHub"
     echo "========================================================================"
     
-    echo -n "Select an option [1-12]: "
+    echo -n "Select an option [1-13]: "
     read -r choice 
 
     case "$choice" in
@@ -105,6 +105,7 @@ while true; do
                 centos|rhel|almalinux|rocky) yum install -y epel-release && yum install -y $RPM_DEV ;;
                 arch) pacman -Sy --needed --noconfirm $ARCH_DEV ;;
             esac
+            if [ -x "$(command -v systemctl)" ]; then systemctl enable --now docker &>/dev/null; fi
             ;;
         4)
             echo ""
@@ -144,7 +145,7 @@ while true; do
                 firewall-cmd --reload &>/dev/null
                 echo "[✔] Firewalld activated and standard zones locked down."
             else
-                echo "[!] Firewall framework missing. Install Option 4 first."
+                echo "[!] Firewall framework missing. Install Option 4 first to use networking configurations."
             fi
             ;;
         7)
@@ -173,41 +174,43 @@ while true; do
         10)
             echo ""
             echo "[*] Launching Ookla Speedtest Engine..."
-            if command -v speedtest &>/dev/null; then
-                speedtest --accept-license --accept-gdpr
-            else
-                echo "[!] Speedtest binary not linked. Execute Option 11 first."
-            fi
+            speedtest --accept-license --accept-gdpr
             ;;
         11)
             echo ""
-            echo "[*] Installing official Speedtest.net repository with GPG keys..."
+            echo "[*] Installing official Speedtest.net repository with secure GPG signatures..."
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
-                apt-get install -y curl gnupg dirmngr apt-transport-https lsb-release
-                # Download and securely register the official GPG key
+                apt-get install -y curl gpg dirmngr apt-transport-https lsb-release
+                mkdir -p /etc/apt/keyrings
                 curl -fsSL https://packagecloud.io | gpg --dearmor -o /etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg
-                # Add the repository referencing the secure keyring explicitly
                 echo "deb [signed-by=/etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg] https://packagecloud.io $(lsb_release -cs) main" > /etc/apt/sources.list.d/speedtest.list
-                apt-get update && apt-get install -y speedtest
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 curl -s https://packagecloud.io | bash
+            elif [ "$OS" = "arch" ]; then
+                echo "[✔] Arch uses native rolling core bindings. Ready for Option 12."
+            fi
+            echo "[✔] Speedtest repository file linked directly."
+            ;;
+        12)
+            echo ""
+            echo "[*] Executing installation for Speedtest engine..."
+            if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
+                apt-get update && apt-get install -y speedtest
+            elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 [ -f /usr/bin/dnf ] && dnf install -y speedtest || yum install -y speedtest
             elif [ "$OS" = "arch" ]; then
                 pacman -Sy --needed --noconfirm speedtest-cli
                 [ ! -f /usr/bin/speedtest ] && ln -s "$(which speedtest-cli)" /usr/local/bin/speedtest 2>/dev/null
             fi
-            echo "[✔] Speedtest signature and repository configurations finalized."
+            echo "[✔] Installation command fired directly."
             ;;
-        12)
+        13)
             echo ""
             echo "Exiting SkelarHub. Keep building!"
             echo ""
             exit 0
             ;;
-        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 12." ;;
+        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 13." ;;
     esac
 
     echo ""
-    echo "Press [ENTER] to return to the SkelarHub Menu..."
-    read -r 
-done
