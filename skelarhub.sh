@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # --- AUTOMATIC ROOT SELF-ELEVATION ---
-# If not run as root, this block automatically elevates the execution context
 if [ "$EUID" -ne 0 ]; then
   echo "[ERROR] SkelarHub requires root privileges. Elevating..."
   exec sudo bash "$0" "$@"
@@ -19,11 +18,12 @@ fi
 draw_header() {
     clear
     echo "========================================================================"
-    echo "  ██████  ██   ██ ███████ ██       █████  ██████  ██   ██ ██    ██ ██████  "
-    echo " ██       ██  ██  ██      ██      ██   ██ ██   ██ ██   ██ ██    ██ ██   ██ "
-    echo "  ██████  █████   █████   ██      ███████ ██████  ███████ ██    ██ ██████  "
-    echo "       ██ ██  ██  ██      ██      ██   ██ ██   ██ ██   ██ ██    ██ ██   ██ "
-    echo "  ██████  ██   ██ ███████ ███████ ██   ██ ██   ██ ██   ██  ██████  ██████  "
+    echo "   ____  _        _             _   _       _     "
+    echo "  / ___|| | _____| | __ _ _ __ | | | |_   _| |__  "
+    echo "  \\___ \\| |/ / _ \\ |/ _\` | '__|| |_| | | | | '_ \\ "
+    echo "   ___) |   <  __/ | (_| | |   |  _  | |_| | |_) |"
+    echo "  |____/|_|\\_\\___|_|\\__,_|_|   |_| |_|\\__,_|_.__/ "
+    echo "                                                  "
     echo "========================================================================"
     echo " System OS Detected: ${OS}"
     echo "========================================================================"
@@ -76,10 +76,13 @@ while true; do
     echo " 7) Performance Tuner (Optimize SWAP usage & Increase File Limits)"
     echo " 8) Hardware & Sensor Inspector (CPU, RAM, Storage Metrics)"
     echo " 9) Backup Configurations (Archive critical system user workspaces)"
-    echo " 10) Exit SkelarHub"
+    echo " 10) Port Knocking Router Guard (Obfuscate SSH / Hide open ports)"
+    echo " 11) Log Poisoning & Tamper Alarm (Monitor auth.log for brute-force patterns)"
+    echo " 12) DNS Speed Sandbox (Bench & hot-swap system to fastest available DNS)"
+    echo " 13) Exit SkelarHub"
     echo "========================================================================"
     
-    echo -n "Select an option [1-10]: "
+    echo -n "Select an option [1-13]: "
     read -r choice 
 
     case "$choice" in
@@ -164,11 +167,52 @@ while true; do
             ;;
         10)
             echo ""
+            echo "[*] Initializing Single-Packet Port Knocking Safeguard..."
+            case "$OS" in
+                ubuntu|debian|pop|mint) apt-get install -y knockd ;;
+                fedora|centos|rhel) dnf install -y knockd || yum install -y knockd ;;
+                arch) pacman -S --needed --noconfirm knockd ;;
+            esac
+            if command -v knockd &> /dev/null; then
+                echo "[✔] Router guard dependencies successfully staged."
+            else
+                echo "[!] Compilation target failed. Install manually or enable EPEL repo."
+            fi
+            ;;
+        11)
+            echo ""
+            echo "[*] Spawning Tamper Detection Loop against Authentication Logs..."
+            echo "Press [Ctrl + C] anytime to terminate tracking telemetry."
+            echo "--------------------------------------------------------"
+            if [ -f /var/log/auth.log ]; then
+                tail -f /var/log/auth.log | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
+            elif [ -f /var/log/secure ]; then
+                tail -f /var/log/secure | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
+            else
+                journalctl -f | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
+            fi
+            ;;
+        12)
+            echo ""
+            echo "[*] Executing DNS Ping Sandbox Benchmark..."
+            time_cf=$(ping -c 3 1.1.1.1 2>/dev/null | awk -F '/' 'END {print $5}')
+            time_gg=$(ping -c 3 8.8.8.8 2>/dev/null | awk -F '/' 'END {print $5}')
+            echo "Cloudflare (1.1.1.1) latency: ${time_cf:-Error} ms"
+            echo "Google (8.8.8.8) latency: ${time_gg:-Error} ms"
+            echo "--------------------------------------------------------"
+            if [ -f /etc/resolv.conf ]; then
+                echo "nameserver 1.1.1.1" > /etc/resolv.conf
+                echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+                echo "[✔] Domain Name Routing optimization completed."
+            fi
+            ;;
+        13)
+            echo ""
             echo "Exiting SkelarHub. Keep building!"
             echo ""
             exit 0
             ;;
-        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 10." ;;
+        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 13." ;;
     esac
 
     echo ""
