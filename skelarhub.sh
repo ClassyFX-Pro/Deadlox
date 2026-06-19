@@ -210,7 +210,9 @@ while true; do
             echo ""
             exit 0
             ;;
-        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 13." ;;
+        *) 
+            echo "" && echo "[!] Invalid Selection. Select an option 1 through 13." 
+            ;;
     esac
 
     echo ""
