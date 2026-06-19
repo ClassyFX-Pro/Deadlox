@@ -97,21 +97,25 @@ while true; do
             mkdir -p /backup && tar -czf /backup/skelarhub_backup_$(date +%F).tar.gz /home 2>/dev/null ;;
         10) echo -e "\n[*] Triggering network assessment metrics..."
             speedtest --accept-license --accept-gdpr ;;
-        11) echo -e "\n[*] Mapping secure Speedtest infrastructure sign keys..."
+        11) echo -e "\n[*] Provisioning official Speedtest.net repository signature hooks..."
             if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
-                apt-get install -y curl gpg dirmngr apt-transport-https lsb-release
-                mkdir -p /etc/apt/keyrings
-                curl -fsSL "https://packagecloud.io" | gpg --yes --dearmor -o /etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg
-                local t_dist="ubuntu" && [ "$OS" = "debian" ] && t_dist="debian"
-                echo "deb [signed-by=/etc/apt/keyrings/ookla-speedtest-cli-archive-keyring.gpg] https://packagecloud.io{t_dist} $(lsb_release -cs) main" > /etc/apt/sources.list.d/speedtest.list
+                # Official configuration sequence
+                apt install curl gnupg2 -y
+                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash
             elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
                 curl -s https://packagecloud.io | bash
-            fi ;;
-        12) echo -e "\n[*] Syncing engine client core libraries..."
-            if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then apt-get update && apt-get install -y speedtest
-            elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then [ -f /usr/bin/dnf ] && dnf install -y speedtest || yum install -y speedtest
-            elif [ "$OS" = "arch" ]; then pacman -Sy --needed --noconfirm speedtest-cli
-                [ ! -f /usr/bin/speedtest ] && ln -s "$(which speedtest-cli)" /usr/local/bin/speedtest 2>/dev/null; fi ;;
+            fi
+            echo "[✔] Signed repository setup completed." ;;
+        12) echo -e "\n[*] Fetching Speedtest engine client binaries..."
+            if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
+                apt install speedtest -y
+            elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
+                [ -f /usr/bin/dnf ] && dnf install -y speedtest || yum install -y speedtest
+            elif [ "$OS" = "arch" ]; then
+                pacman -Sy --needed --noconfirm speedtest-cli
+                [ ! -f /usr/bin/speedtest ] && ln -s "$(which speedtest-cli)" /usr/local/bin/speedtest 2>/dev/null
+            fi
+            echo "[✔] Speedtest client engine layer loaded." ;;
         13) echo -e "\nExiting SkelarHub." && exit 0 ;;
         *)  echo -e "\n[!] Selection out of bounds." ;;
     esac
