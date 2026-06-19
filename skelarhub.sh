@@ -1,221 +1,78 @@
 #!/bin/bash
 
-# --- AUTOMATIC ROOT SELF-ELEVATION ---
-if [ "$EUID" -ne 0 ]; then
-  echo "[ERROR] SkelarHub requires root privileges. Elevating..."
-  exec sudo bash "$0" "$@"
-  exit 1
-fi
+# --- ROOT ELEVATION ---
+[ "$EUID" -ne 0 ] && echo "[ERROR] Run with root privileges." && exec sudo bash "$0" "$@" && exit 1
 
 # Detect Linux Distribution
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$ID
-else
-    OS="unknown"
-fi
+[ -f /etc/os-release ] && . /etc/os-release && OS=$ID || OS="unknown"
 
-draw_header() {
-    clear
-    echo "========================================================================"
-    echo "   ____  _        _             _   _       _     "
-    echo "  / ___|| | _____| | __ _ _ __ | | | |_   _| |__  "
-    echo "  \\___ \\| |/ / _ \\ |/ _\` | '__|| |_| | | | | '_ \\ "
-    echo "   ___) |   <  __/ | (_| | |   |  _  | |_| | |_) |"
-    echo "  |____/|_|\\_\\___|_|\\__,_|_|   |_| |_|\\__,_|_.__/ "
-    echo "                                                  "
-    echo "========================================================================"
-    echo " System OS Detected: ${OS}"
-    echo "========================================================================"
+# Unified Installer Helper Function
+pkg_install() {
+    case "$OS" in
+        ubuntu|debian|pop|mint) apt-get update -y && apt-get install -y $1 ;;
+        fedora) dnf install -y $1 ;;
+        centos|rhel|almalinux|rocky) yum install -y epel-release && yum install -y $1 ;;
+        arch) pacman -Sy --needed --noconfirm $1 ;;
+    esac
 }
 
-# Package Configurations
-DEB_DEV="build-essential git curl wget vim nano tmux htop python3 python3-pip nodejs npm docker.io docker-compose"
-RPM_DEV="curl wget git @development-tools vim-enhanced nano htop tmux python3 python3-pip nodejs docker docker-compose"
-ARCH_DEV="base-devel git curl wget vim nano tmux htop python3 python3-pip nodejs npm docker docker-compose"
-
-DEB_NET="nmap net-tools mtr iperf3 dnsutils ufw"
-RPM_NET="nmap net-tools mtr iperf3 bind-utils ufw"
-ARCH_NET="nmap net-tools mtr iperf3 dnsutils ufw"
-
-# AI Diagnostic Function
-ai_diagnostic() {
-    echo ""
-    echo "[AI MODE] Running system self-healing checks..."
-    local tools=("curl" "wget" "git" "vim" "nano" "htop" "tmux" "unzip" "zip" "tar")
-    local missing=()
-    for tool in "${tools[@]}"; do
-        if ! command -v "$tool" &> /dev/null; then
-            echo "[!] Missing Core Tool: $tool"
-            missing+=("$tool")
-        fi
-    done
-    if [ ${#missing[@]} -eq 0 ]; then
-        echo "[✔] AI Check Passed: No essential utilities are missing!"
-    else
-        echo "[*] AI Mode resolving ${#missing[@]} missing packages..."
-        case "$OS" in
-            ubuntu|debian|pop|mint) apt-get update -y && apt-get install -y "${missing[@]}" ;;
-            fedora) dnf install -y "${missing[@]}" ;;
-            centos|rhel|almalinux|rocky) yum install -y epel-release && yum install -y "${missing[@]}" ;;
-            arch) pacman -Sy --needed --noconfirm "${missing[@]}" ;;
-        esac
-        echo "[✔] AI Mode complete: Missing binaries resolved."
-    fi
-}
-
-# Master Loop Execution
 while true; do
-    draw_header
-    echo " 1) Update & Upgrade System Packages"
-    echo " 2) AI Mode (Auto-Detect & Patch Missing Utilities)"
-    echo " 3) Developer Workspace Suite (Compilers, Runtimes, Git, Docker)"
-    echo " 4) Network Toolkit & Diagnostic Utilities (Nmap, Netstat, Iperf3)"
-    echo " 5) Fast System Junk Cleaner (Clear Cache, Logs, and Orphaning Assets)"
-    echo " 6) Basic Security Hardening (Enable Firewall & Close Weak Entrypoints)"
-    echo " 7) Performance Tuner (Optimize SWAP usage & Increase File Limits)"
-    echo " 8) Hardware & Sensor Inspector (CPU, RAM, Storage Metrics)"
-    echo " 9) Backup Configurations (Archive critical system user workspaces)"
-    echo " 10) Port Knocking Router Guard (Obfuscate SSH / Hide open ports)"
-    echo " 11) Log Poisoning & Tamper Alarm (Monitor auth.log for brute-force patterns)"
-    echo " 12) DNS Speed Sandbox (Bench & hot-swap system to fastest available DNS)"
+    clear
+    echo "======================================================================================================================"
+    echo "  ███████╗██╗  ██╗███████╗██╗      █████╗ ██████╗ ██╗  ██╗██╗   ██╗██████╗ "
+    echo "  ██╔════╝██║  ██║██╔════╝██║     ██╔══██╗██╔══██╗██║  ██║██║   ██║██╔══██╗"
+    echo "  ███████╗███████║█████╗  ██║     ███████║██████╔╝███████║██║   ██║██████╔╝"
+    echo "  ╚════██║██╔══██║██╔══╝  ██║     ██╔══██║██╔══██╗██╔══██║██║   ██║██╔══██╗"
+    echo "  ███████║██║  ██║███████╗███████╗██║  ██║██║  ██║██║  ██║╚██████╔╝██████╔╝"
+    echo "  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ "
+    echo "======================================================================================================================"
+    echo " System OS Detected: $OS"
+    echo "======================================================================================================================"
+    echo " 1) Upgrade System"
+    echo " 2) AI Self-Healing Core"
+    echo " 3) Developer Workspace Suite"
+    echo " 4) Network Diagnostic Toolkit"
+    echo " 5) Fast Junk Cleaner"
+    echo " 6) Basic Security Hardening"
+    echo " 7) Performance Kernel Tuner"
+    echo " 8) Hardware & Sensor Inspector"
+    echo " 9) Archive Backup System"
+    echo " 10) Port Knocking Router Guard"
+    echo " 11) Run Ookla Speedtest"
+    echo " 12) Install Speedtest.net Engine"
     echo " 13) Exit SkelarHub"
-    echo "========================================================================"
-    
-    echo -n "Select an option [1-13]: "
-    read -r choice 
+    echo "======================================================================================================================"
+    echo -n "Select an option [1-13]: " && read -r choice
 
     case "$choice" in
-        1)
-            echo ""
-            echo "[*] Running System Upgrade..."
-            case "$OS" in
-                ubuntu|debian|pop|mint) apt-get update -y && apt-get upgrade -y ;;
-                fedora) dnf upgrade -y ;;
-                centos|rhel|almalinux|rocky) yum update -y ;;
-                arch) pacman -Syu --noconfirm ;;
-            esac
-            ;;
-        2) ai_diagnostic ;;
-        3)
-            echo ""
-            echo "[*] Deploying Developer Suite..."
-            case "$OS" in
-                ubuntu|debian|pop|mint) apt-get update -y && apt-get install -y $DEB_DEV ;;
-                fedora) dnf install -y $RPM_DEV ;;
-                centos|rhel|almalinux|rocky) yum install -y epel-release && yum install -y $RPM_DEV ;;
-                arch) pacman -Sy --needed --noconfirm $ARCH_DEV ;;
-            esac
-            ;;
-        4)
-            echo ""
-            echo "[*] Provisioning Networking Toolkit..."
-            case "$OS" in
-                ubuntu|debian|pop|mint) apt-get update -y && apt-get install -y $DEB_NET ;;
-                fedora) dnf install -y $RPM_NET ;;
-                centos|rhel|almalinux|rocky) yum install -y $RPM_NET ;;
-                arch) pacman -Sy --needed --noconfirm $ARCH_NET ;;
-            esac
-            ;;
-        5)
-            echo ""
-            echo "[*] Clearing temporary package layers, caches, and system journal logs..."
-            case "$OS" in
-                ubuntu|debian|pop|mint) apt-get autoremove -y && apt-get clean -y ;;
-                fedora|centos|rhel|almalinux|rocky) dnf clean all -y || yum clean all -y ;;
-                arch) pacman -Scc --noconfirm ;;
-            esac
-            rm -rf /tmp/* 2>/dev/null
-            journalctl --vacuum-time=3d &>/dev/null
-            echo "[✔] System cleanup cycle successfully wrapped."
-            ;;
-        6)
-            echo ""
-            echo "[*] Applying fundamental infrastructure security controls..."
-            if command -v ufw &> /dev/null; then
-                ufw default deny incoming &>/dev/null
-                ufw default allow outgoing &>/dev/null
-                ufw allow 22/tcp comment 'SSH Port' &>/dev/null
-                ufw --force enable
-                echo "[✔] Firewall activated and standard inbound access clamped."
-            else
-                echo "[!] Firewall framework (UFW) missing. Install Option 4 first."
-            fi
-            ;;
-        7)
-            echo ""
-            echo "[*] Adjusting operational limits and kernel memory optimization..."
-            sysctl -w vm.swappiness=10 &>/dev/null
-            sysctl -w fs.file-max=2097152 &>/dev/null
-            echo "[✔] Virtual memory limits and SWAP handling ratios enhanced."
-            ;;
-        8)
-            echo ""
-            echo "[*] Real-Time System Load Summary:"
-            echo "--------------------------------------"
-            echo "CPU Architecture: $(uname -m)"
-            echo "System Uptime: $(uptime -p)"
-            echo "Memory Breakdown:" && free -h
-            echo "Disk Storage Allocation:" && df -h / | grep -v Filesystem
-            ;;
-        9)
-            echo ""
-            echo "[*] Generating backup archive of operational configurations..."
-            mkdir -p /backup
-            tar -czf /backup/skelarhub_home_backup_$(date +%F).tar.gz /home 2>/dev/null
-            echo "[✔] Compressed archive generated successfully under /backup directory."
-            ;;
-        10)
-            echo ""
-            echo "[*] Initializing Single-Packet Port Knocking Safeguard..."
-            case "$OS" in
-                ubuntu|debian|pop|mint) apt-get install -y knockd ;;
-                fedora|centos|rhel) dnf install -y knockd || yum install -y knockd ;;
-                arch) pacman -S --needed --noconfirm knockd ;;
-            esac
-            if command -v knockd &> /dev/null; then
-                echo "[✔] Router guard dependencies successfully staged."
-            else
-                echo "[!] Compilation target failed. Install manually or enable EPEL repo."
-            fi
-            ;;
-        11)
-            echo ""
-            echo "[*] Spawning Tamper Detection Loop against Authentication Logs..."
-            echo "Press [Ctrl + C] anytime to terminate tracking telemetry."
-            echo "--------------------------------------------------------"
-            if [ -f /var/log/auth.log ]; then
-                tail -f /var/log/auth.log | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
-            elif [ -f /var/log/secure ]; then
-                tail -f /var/log/secure | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
-            else
-                journalctl -f | grep --line-buffered -E "Failed|invalid|Accepted|sudo"
-            fi
-            ;;
-        12)
-            echo ""
-            echo "[*] Executing DNS Ping Sandbox Benchmark..."
-            time_cf=$(ping -c 3 1.1.1.1 2>/dev/null | awk -F '/' 'END {print $5}')
-            time_gg=$(ping -c 3 8.8.8.8 2>/dev/null | awk -F '/' 'END {print $5}')
-            echo "Cloudflare (1.1.1.1) latency: ${time_cf:-Error} ms"
-            echo "Google (8.8.8.8) latency: ${time_gg:-Error} ms"
-            echo "--------------------------------------------------------"
-            if [ -f /etc/resolv.conf ]; then
-                echo "nameserver 1.1.1.1" > /etc/resolv.conf
-                echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-                echo "[✔] Domain Name Routing optimization completed."
-            fi
-            ;;
-        13)
-            echo ""
-            echo "Exiting SkelarHub. Keep building!"
-            echo ""
-            exit 0
-            ;;
-        *) echo "" && echo "[!] Invalid Selection. Select an option 1 through 13." ;;
+        1)  echo "[*] Upgrading..."
+            [ "$OS" = "arch" ] && pacman -Syu --noconfirm || ([ "$OS" = "fedora" ] && dnf upgrade -y) || ([ -f /usr/bin/apt-get ] && apt-get update -y && apt-get upgrade -y) || yum update -y ;;
+        2)  echo "[*] Running AI Core..." && missing=()
+            for t in curl wget git vim nano htop tmux unzip zip tar; do ! command -v "$t" &>/dev/null && missing+=("$t"); done
+            [ ${#missing[@]} -gt 0 ] && pkg_install "${missing[*]}" || echo "[✔] Everything installed." ;;
+        3)  pkg_install "build-essential git curl wget vim nano tmux htop python3 python3-pip nodejs npm docker.io docker-compose" ;;
+        4)  pkg_install "nmap net-tools mtr iperf3 dnsutils ufw" ;;
+        5)  echo "[*] Cleaning..."
+            [ -f /usr/bin/apt-get ] && apt-get autoremove -y && apt-get clean -y
+            [ -f /usr/bin/dnf ] && dnf clean all -y || ([ -f /usr/bin/yum ] && yum clean all -y)
+            [ "$OS" = "arch" ] && pacman -Scc --noconfirm
+            rm -rf /tmp/* 2>/dev/null && journalctl --vacuum-time=3d &>/dev/null ;;
+        6)  command -v ufw &>/dev/null && (ufw default deny incoming && ufw default allow outgoing && ufw allow 22/tcp && ufw --force enable) || echo "[!] Run Option 4 first." ;;
+        7)  sysctl -w vm.swappiness=10 fs.file-max=2097152 &>/dev/null ;;
+        8)  echo "CPU: $(uname -m) | Uptime: $(uptime -p)" && free -h && df -h / | grep -v Filesystem ;;
+        9)  mkdir -p /backup && tar -czf /backup/skelarhub_backup_$(date +%F).tar.gz /home 2>/dev/null ;;
+        10) pkg_install "knockd" ;;
+        11) command -v speedtest &>/dev/null && speedtest --accept-license --accept-gdpr || echo "[!] Run Option 12 first." ;;
+        12) echo "[*] Downloading official Ookla network engine repository configurations..."
+            if [[ "$OS" =~ (ubuntu|debian|pop|mint) ]]; then
+                apt-get install -y curl gnupg && curl -s https://packagecloud.io | bash && apt-get update && apt-get install -y speedtest
+            elif [[ "$OS" =~ (fedora|centos|rhel|almalinux|rocky) ]]; then
+                curl -s https://packagecloud.io | bash && ([ -f /usr/bin/dnf ] && dnf install -y speedtest || yum install -y speedtest)
+            elif [ "$OS" = "arch" ]; then
+                pacman -Sy --needed --noconfirm speedtest-cli && [ ! -f /usr/bin/speedtest ] && ln -s $(which speedtest-cli) /usr/local/bin/speedtest 2>/dev/null
+            fi ;;
+        13) echo "Exiting." && exit 0 ;;
+        *)  echo "[!] Invalid Selection." ;;
     esac
-
-    echo ""
-    echo "Press [ENTER] to return to the SkelarHub Menu..."
-    read -r 
+    echo "" && echo "Press [ENTER] to return to the Menu..." && read -r
 done
